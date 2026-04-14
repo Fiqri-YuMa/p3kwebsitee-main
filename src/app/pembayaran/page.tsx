@@ -88,7 +88,7 @@ export default function PembayaranPage() {
         console.error('Gagal parsing localStorage:', error);
         router.push('/daftar');
     }
-}, []);
+}, [router]);
 
     const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files?.[0]) {
@@ -215,10 +215,11 @@ export default function PembayaranPage() {
                 const text = await apiResponse.text();
                 console.error("API Error (RAW):", text);
                 throw new Error("API kwitansi gagal");
-            }else {
-               let apiResult;
+            } else {
+                // Hapus variabel apiResult, langsung parse saja
                 try {
-                    apiResult = await apiResponse.json();
+                    await apiResponse.json(); // Hapus assignment ke variabel
+                    console.log("API kwitansi berhasil dipanggil");
                 } catch {
                     const text = await apiResponse.text();
                     console.error("Response bukan JSON:", text);

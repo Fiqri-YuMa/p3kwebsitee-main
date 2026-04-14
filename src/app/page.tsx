@@ -142,7 +142,7 @@ export default function Home() {
             >
                 P3K UNSUR 2026 <br/>
                 <span className="bg-gradient-to-r from-sky-400 to-blue-300 bg-clip-text text-transparent">
-                  "SIAGA, Solidaritas dan Inspiratif Aksi Generasi Peduli Lingkungan"
+                  &quot;SIAGA, Solidaritas dan Inspiratif Aksi Generasi Peduli Lingkungan&quot;
                 </span>
             </motion.h1>
 
