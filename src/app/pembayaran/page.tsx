@@ -79,7 +79,7 @@ export default function PembayaranPage() {
             const wib = new Date(now.getTime() + offset);
             const pad = (n: number) => String(n).padStart(2, '0');
             const timestamp = `${wib.getFullYear()}${pad(wib.getMonth() + 1)}${pad(wib.getDate())}${pad(wib.getHours())}${pad(wib.getMinutes())}`;
-            const nomor = `P3K2025-${data.sekolah.nama.replace(/\s+/g, '').toUpperCase().slice(0, 10)}-${timestamp}`;
+            const nomor = `P3K2026-${data.sekolah.nama.replace(/\s+/g, '').toUpperCase().slice(0, 10)}-${timestamp}`;
             setNomor(nomor);
         } else {
             router.push('/daftar');

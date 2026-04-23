@@ -279,7 +279,7 @@ export default function KwitansiPage() {
             </Suspense>
 
             <p className="text-xs text-gray-400 dark:text-gray-600 mt-4">
-                KSR PMI Unit Universitas Suryakancana &copy; 2025
+                KSR PMI Unit Universitas Suryakancana &copy; 2026
             </p>
         </div>
     );
