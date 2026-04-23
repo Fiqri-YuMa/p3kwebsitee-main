@@ -76,7 +76,7 @@ export default function NavbarMobile() {
     { href: '/informasi', label: 'Informasi Lomba', icon: Info },
     { href: '/admin/leaderboard', label: 'Hasil Akhir Lomba', icon: Trophy },
     {
-      href: 'https://drive.google.com/drive/folders/1HAsBXoPitXxJXpGss1smselXrWCHH5Jo?usp=sharing',
+      href: 'https://drive.google.com/drive/folders/1meblruJaTOoQSc-wrAxCzC2ICo6xAxem',
       label: 'Surat Edaran',
       external: true,
       icon: FileText

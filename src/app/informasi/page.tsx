@@ -110,7 +110,7 @@ export default function InformasiPage() {
                   icon={<Download className="w-5 h-5" />}
                   title="JUJU Hasil TM"
                   description="Download Juklak & Juknis"
-                  href="https://drive.google.com/drive/folders/1C9kYtvdaV9i6BIocEu7dV1nCn2N-wYik?usp=drive_link"
+                  href="https://drive.google.com/drive/folders/1meblruJaTOoQSc-wrAxCzC2ICo6xAxem"
                 />
                 
                 <DocumentButton 

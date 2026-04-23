@@ -27,7 +27,7 @@ export default function NavbarDesktop() {
     { label: 'HASIL AKHIR', href: '/admin/leaderboard' },
     {
       label: 'SURAT EDARAN',
-      href: 'https://drive.google.com/drive/folders/1HAsBXoPitXxJXpGss1smselXrWCHH5Jo?usp=sharing',
+      href: 'https://drive.google.com/drive/folders/1meblruJaTOoQSc-wrAxCzC2ICo6xAxem',
       external: true,
     },
   ];
