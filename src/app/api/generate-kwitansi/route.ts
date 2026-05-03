@@ -7,7 +7,7 @@ import { LOMBA_LIST } from '@/data/lomba';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! 
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 export async function GET(request: Request) {
@@ -19,7 +19,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 🔹 Ambil data pendaftaran
+    // Ambil data pendaftaran
     const { data: pendaftaran, error } = await supabase
       .from('pendaftaran')
       .select('*')
@@ -30,10 +30,48 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Data tidak ditemukan' }, { status: 404 });
     }
 
-    // 🔹 Ambil data lomba dari JSON
-    const lombaData = pendaftaran.lombaJson || {};
+    // Parse lombaJson dari Supabase
+    const rawLombaJson =
+      pendaftaran.lombaJson ||
+      pendaftaran.lomba_json ||
+      pendaftaran.lomba ||
+      '{}';
 
-    // 🔹 Load gambar (aman)
+    let lombaData: Record<string, any> = {};
+
+    try {
+      if (typeof rawLombaJson === 'string') {
+        lombaData = JSON.parse(rawLombaJson || '{}');
+      } else if (typeof rawLombaJson === 'object' && rawLombaJson !== null) {
+        lombaData = rawLombaJson;
+      }
+    } catch (e) {
+      console.error('Gagal parse lombaJson:', rawLombaJson, e);
+      lombaData = {};
+    }
+
+    // Bikin rows tabel lomba
+    const rows = LOMBA_LIST
+      .map((lomba) => {
+        const jumlah = Number(lombaData[lomba.id] || 0);
+
+        if (jumlah <= 0) return null;
+
+        const biaya = Number(lomba.biaya) * jumlah;
+
+        return {
+          nama: lomba.nama,
+          jumlah,
+          biaya,
+        };
+      })
+      .filter((row): row is { nama: string; jumlah: number; biaya: number } => row !== null);
+
+    console.log('RAW LOMBA JSON:', rawLombaJson);
+    console.log('PARSED LOMBA DATA:', lombaData);
+    console.log('ROWS PDF:', rows);
+
+    // Load gambar
     let logoBase64 = '';
     let stempelBase64 = '';
 
@@ -48,11 +86,13 @@ export async function GET(request: Request) {
     }
 
     const doc = new jsPDF('p', 'mm', 'a4');
+
     const margin = 20;
-    let y = margin;
     const pageWidth = doc.internal.pageSize.getWidth();
 
-    // 🔹 Header
+    let y = margin;
+
+    // Header
     if (logoBase64) {
       doc.addImage(logoBase64, 'PNG', margin, y, 40, 25);
     }
@@ -61,78 +101,101 @@ export async function GET(request: Request) {
     doc.setFontSize(14);
     doc.text('PEKAN PERLOMBAAN PMR (P3K) 2026', margin + 50, y + 8);
 
-    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
     doc.text('KSR PMI Unit Universitas Suryakancana', margin + 50, y + 14);
     doc.text('Cianjur, Jawa Barat', margin + 50, y + 20);
 
     y += 30;
+
     doc.line(margin, y, pageWidth - margin, y);
     y += 10;
 
-    // 🔹 Judul
+    // Judul
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(18);
     doc.text('BUKTI PEMBAYARAN RESMI', pageWidth / 2, y, { align: 'center' });
+
     y += 10;
 
-    // 🔹 Info
-    doc.setFontSize(10);
+    // Info peserta
     doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
 
     doc.text(`Nomor: ${nomor}`, margin, y);
     doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, margin, y + 5);
 
-    doc.text(`Sekolah: ${pendaftaran.nama_sekolah}`, margin, y + 15);
-    doc.text(`Pembina: ${pendaftaran.pembina}`, margin, y + 20);
-    doc.text(`WA: ${pendaftaran.whatsapp}`, margin, y + 25);
+    doc.text(`Sekolah: ${pendaftaran.nama_sekolah || '-'}`, margin, y + 15);
+    doc.text(`Pembina: ${pendaftaran.pembina || '-'}`, margin, y + 20);
+    doc.text(`WA: ${pendaftaran.whatsapp || '-'}`, margin, y + 25);
 
     y += 35;
 
-    // 🔹 Table Header
-    const headers = ['Nama Lomba', 'Jumlah', 'Biaya'];
-    const colWidths = [90, 30, 50];
+    // Tabel lomba
+    const colNama = 90;
+    const colJumlah = 30;
+    const colBiaya = 50;
     const rowHeight = 8;
 
     let x = margin;
 
     doc.setFont('helvetica', 'bold');
-    headers.forEach((h, i) => {
-      doc.rect(x, y, colWidths[i], rowHeight);
-      doc.text(h, x + 2, y + 5);
-      x += colWidths[i];
-    });
+    doc.setFontSize(10);
+
+    // Header tabel
+    doc.rect(x, y, colNama, rowHeight);
+    doc.text('Nama Lomba', x + 2, y + 5);
+    x += colNama;
+
+    doc.rect(x, y, colJumlah, rowHeight);
+    doc.text('Jumlah', x + 2, y + 5);
+    x += colJumlah;
+
+    doc.rect(x, y, colBiaya, rowHeight);
+    doc.text('Biaya', x + 2, y + 5);
 
     y += rowHeight;
 
-    // 🔹 Table Rows (FIXED pakai lombaJson)
+    // Isi tabel
     doc.setFont('helvetica', 'normal');
 
-    const rows = LOMBA_LIST
-      .filter(l => (lombaData[l.id] || 0) > 0)
-      .map(l => [
-        l.nama,
-        (lombaData[l.id] || 0).toString(),
-        `Rp ${(l.biaya * (lombaData[l.id] || 0)).toLocaleString('id-ID')}`
-      ]);
-
-    rows.forEach(row => {
+    if (rows.length === 0) {
       x = margin;
-      row.forEach((cell, i) => {
-        doc.rect(x, y, colWidths[i], rowHeight);
-        doc.text(cell, x + 2, y + 5);
-        x += colWidths[i];
-      });
+      doc.rect(x, y, colNama + colJumlah + colBiaya, rowHeight);
+      doc.text('Tidak ada data lomba', x + 2, y + 5);
       y += rowHeight;
-    });
+    } else {
+      rows.forEach((row) => {
+        x = margin;
+
+        doc.rect(x, y, colNama, rowHeight);
+        doc.text(row.nama, x + 2, y + 5);
+        x += colNama;
+
+        doc.rect(x, y, colJumlah, rowHeight);
+        doc.text(String(row.jumlah), x + 2, y + 5);
+        x += colJumlah;
+
+        doc.rect(x, y, colBiaya, rowHeight);
+        doc.text(`Rp ${row.biaya.toLocaleString('id-ID')}`, x + 2, y + 5);
+
+        y += rowHeight;
+      });
+    }
 
     y += 10;
 
-    // 🔹 Total (FIXED)
+    // Total
+    const totalBayar = Number(
+      pendaftaran.totalBayar ||
+      pendaftaran.total_bayar ||
+      0
+    );
+
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.text(
-      `Total: Rp ${pendaftaran.totalBayar.toLocaleString('id-ID')}`,
+      `Total: Rp ${totalBayar.toLocaleString('id-ID')}`,
       pageWidth - margin,
       y,
       { align: 'right' }
@@ -140,18 +203,22 @@ export async function GET(request: Request) {
 
     y += 20;
 
-    // 🔹 Stempel
+    // Stempel
     if (stempelBase64) {
       doc.addImage(stempelBase64, 'PNG', pageWidth - 80, y - 10, 60, 60);
     }
 
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
     doc.text('Panitia P3K 2026', pageWidth - 50, y + 50, { align: 'center' });
 
-    // 🔹 Convert PDF
+    // Convert PDF
     const pdfBuffer = doc.output('arraybuffer');
-    const filename = `kwitansi/${nomor}.pdf`;
 
-    // 🔹 Upload ke Supabase Storage
+    // Pakai nama baru biar gak kena cache PDF lama
+    const filename = `kwitansi/${nomor}-${Date.now()}.pdf`;
+
+    // Upload ke Supabase Storage
     const { error: uploadError } = await supabase.storage
       .from('kwitansi')
       .upload(filename, pdfBuffer, {
@@ -167,25 +234,25 @@ export async function GET(request: Request) {
       .from('kwitansi')
       .getPublicUrl(filename);
 
-    // 🔹 Update DB
+    // Update DB
     await supabase
       .from('pendaftaran')
       .update({ kwitansi_url: urlData.publicUrl })
       .eq('nomor', nomor);
-    
-      
 
     return NextResponse.json({
       success: true,
-      kwitansi_url: urlData.publicUrl
+      kwitansi_url: urlData.publicUrl,
     });
-
   } catch (err: any) {
     console.error('API ERROR:', err);
 
-    return NextResponse.json({
-      error: 'Gagal membuat kwitansi',
-      detail: err.message
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: 'Gagal membuat kwitansi',
+        detail: err.message,
+      },
+      { status: 500 }
+    );
   }
 }
