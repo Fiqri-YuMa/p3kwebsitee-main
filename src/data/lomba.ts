@@ -2,7 +2,7 @@ export const LOMBA_LIST = [
   {
     id: "tandu_putra",
     nama: "Tandu Putra",
-    biaya: 70000,
+    biaya: 80000,
     keterangan: "2 orang per tim, Maksimal 5 Tim",
     maksPesertaPerTim: 2,
     maksTim: 5,
@@ -10,7 +10,7 @@ export const LOMBA_LIST = [
   {
     id: "tandu_putri",
     nama: "Tandu Putri",
-    biaya: 70000,
+    biaya: 80000,
     keterangan: "2 orang per tim, Maksimal 5 Tim",
     maksPesertaPerTim: 2,
     maksTim: 5,
@@ -18,7 +18,7 @@ export const LOMBA_LIST = [
   {
     id: "pertolongan_pertama",
     nama: "Pertolongan Pertama",
-    biaya: 70000,
+    biaya: 80000,
     keterangan: "4 orang per tim, Maksimal 5 Tim",
     maksPesertaPerTim: 4,
     maksTim: 5,
@@ -26,7 +26,7 @@ export const LOMBA_LIST = [
   {
     id: "senam_poco_poco",
     nama: "Senam Kreasi Poco-Poco",
-    biaya: 75000,
+    biaya: 85000,
     keterangan: "Kosongkan Jika Peserta Kurang Dari 10 Orang",
     maksPesertaPerTim: 10,
     maksTim: 5, // hanya 1 tim karena fleksibel
@@ -34,7 +34,7 @@ export const LOMBA_LIST = [
   {
     id: "mojang_jajaka",
     nama: "Mojang Jajaka",
-    biaya: 70000,
+    biaya: 80000,
     keterangan: "2 orang per tim, Maksimal 5 Tim",
     maksPesertaPerTim: 2,
     maksTim: 5,
@@ -43,7 +43,7 @@ export const LOMBA_LIST = [
   {
     id: "poster",
     nama: "Poster",
-    biaya: 50000,
+    biaya: 60000,
     keterangan: "3 orang per tim, Maksimal 5 Tim",
     maksPesertaPerTim: 3,
     maksTim: 5,
@@ -52,7 +52,7 @@ export const LOMBA_LIST = [
   {
     id: 'pmr_cerdas',
     nama: 'PMR Cerdas',
-    biaya: 50000,
+    biaya: 60000,
     keterangan: '3 orang per tim, Maksimal 5 Tim',
     maksTim: 5,
     maksPesertaPerTim: 3,
