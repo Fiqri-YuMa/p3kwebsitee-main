@@ -21,6 +21,10 @@ interface Pendaftaran {
     id: string;
     kategori: string;
     nama_sekolah: string;
+    createdAt: string;
+
+    total: number;
+
     tandu_putra: number;
     tandu_putri: number;
     pertolongan_pertama: number;
@@ -28,8 +32,6 @@ interface Pendaftaran {
     mojang_jajaka: number;
     poster: number;
     pmr_cerdas: number;
-    total: number;
-    created_at: string;
 }
 
 // --- Data Peserta per Tim (Sama) ---
@@ -121,22 +123,52 @@ export default function Statistics() {
     const [loading, setLoading] = useState(true);
     const [selectedKategori, setSelectedKategori] = useState('Semua'); // <-- State Baru
 
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const { data: pendaftar, error } = await supabase
-                .from('pendaftaran')
-                .select('*')
-                .order('created_at', { ascending: true });
+const fetchData = async () => {
+    setLoading(true);
 
-            if (error) throw error;
-            setData(pendaftar as Pendaftaran[]);
-        } catch (error) {
-            console.error('Error fetching data:', error);
-            toast.error('Gagal memuat data statistik');
-        }
-        setLoading(false);
-    };
+    try {
+        const { data: pendaftar, error } = await supabase
+            .from('pendaftaran')
+            .select('*')
+            .order('createdAt', { ascending: true });
+
+        if (error) throw error;
+
+        const normalizedData = (pendaftar || []).map((row: any) => {
+            let lomba = {};
+
+            try {
+                lomba = JSON.parse(row.lombaJson || '{}');
+            } catch {
+                lomba = {};
+            }
+
+            return {
+                id: row.id,
+                kategori: row.kategori,
+                nama_sekolah: row.nama_sekolah,
+                createdAt: row.createdAt,
+
+                total: row.totalBayar || 0,
+
+                tandu_putra: Number(lomba["tandu_putra"] || 0),
+                tandu_putri: Number(lomba["tandu_putri"] || 0),
+                pertolongan_pertama: Number(lomba["pertolongan_pertama"] || 0),
+                senam_poco_poco: Number(lomba["senam_poco_poco"] || 0),
+                mojang_jajaka: Number(lomba["mojang_jajaka"] || 0),
+                poster: Number(lomba["poster"] || 0),
+                pmr_cerdas: Number(lomba["pmr_cerdas"] || 0),
+            };
+        });
+
+        setData(normalizedData as Pendaftaran[]);
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        toast.error('Gagal memuat data statistik');
+    }
+
+    setLoading(false);
+};
 
     useEffect(() => {
         fetchData();
@@ -248,7 +280,7 @@ ${createLombaString(statsMadya)}
 
         const cleanMessage = message.split('\n').map(line => line.trim()).join('\n').trim();
         const encodedMessage = encodeURIComponent(cleanMessage);
-        const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+        const whatsappUrl =`https://api.whatsapp.com/send/?text=${encodedMessage}`;
         window.open(whatsappUrl, '_blank');
         toast.success("Membuka WhatsApp untuk berbagi...");
     };
@@ -264,7 +296,7 @@ ${createLombaString(statsMadya)}
                 {/* --- Header (Sama) --- */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-15 gap-4 mb-6">
                     <div>
-                        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-[#FFD700] via-[#FFA500] to-[#B8860B] bg-clip-text text-transparent">
+                        <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-[#3b82f6] via-[#1c4381] to-[#011584] bg-clip-text text-transparent">
                             Dashboard Statistik P3K 2026
                         </h1>
                         <p className="text-slate-600 dark:text-slate-400 mt-2 text-lg">

@@ -222,18 +222,14 @@ export default function DaftarPage() {
         });
       });
       if (kosong.length) {
-        setConfirmMessage(
-          `Beberapa data peserta tim belum lengkap:\n${kosong.join(
-            '\n'
-          )}\n\nApakah Anda yakin ingin melanjutkan? Anda bisa melengkapinya nanti.`
-        );
-        setShowConfirmModal(true);
+        alert(
+          `Data peserta berikut belum lengkap:\n\n${kosong.join('\n')}\n\nSemua nama peserta wajib diisi.`
+      );
         return;
       }
     }
 
-    if (errs.length) return setErrors(errs);
-
+      if (errs.length) return setErrors(errs);
     setCurrentStep((s) => Math.min(s + 1, steps.length - 1));
   };
 

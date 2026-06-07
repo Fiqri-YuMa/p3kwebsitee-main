@@ -72,7 +72,7 @@ const initialFormData = {
 
 export default function FormModal({ open, onClose, data, onSuccess }: FormModalProps) {
   const [formData, setFormData] = useState(initialFormData);
-  // const [peserta, setPeserta] = useState<Record<string, string[][]>>({}); // Dihapus
+  const [peserta, setPeserta] = useState<Record<string, string[][]>>({}); // Dihapus
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -92,10 +92,10 @@ export default function FormModal({ open, onClose, data, onSuccess }: FormModalP
         pmr_cerdas: data.pmr_cerdas || 0,
         total: data.total || 0,
       });
-      // setPeserta(data.peserta || {}); // Dihapus
+      setPeserta(data.peserta || {}); // Dihapus
     } else {
       setFormData(initialFormData);
-      // setPeserta({}); // Dihapus
+      setPeserta({}); // Dihapus
     }
     setErrors([]);
   }, [data, open]);
@@ -124,18 +124,18 @@ export default function FormModal({ open, onClose, data, onSuccess }: FormModalP
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  // const handlePesertaChange = (lombaId: string, timIndex: number, pesertaIndex: number, value: string) => { // Dihapus
-  //   setPeserta(prev => {
-  //     const updated = JSON.parse(JSON.stringify(prev));
-  //     if (!updated[lombaId]) updated[lombaId] = [];
-  //     if (!updated[lombaId][timIndex]) {
-  //       const lomba = LOMBA_LIST.find(l => l.id === lombaId);
-  //       updated[lombaId][timIndex] = Array(lomba?.maksPesertaPerTim || 0).fill('');
-  //     }
-  //     updated[lombaId][timIndex][pesertaIndex] = value;
-  //     return updated;
-  //   });
-  // };
+  const handlePesertaChange = (lombaId: string, timIndex: number, pesertaIndex: number, value: string) => { // Dihapus
+    setPeserta(prev => {
+      const updated = JSON.parse(JSON.stringify(prev));
+      if (!updated[lombaId]) updated[lombaId] = [];
+      if (!updated[lombaId][timIndex]) {
+        const lomba = LOMBA_LIST.find(l => l.id === lombaId);
+        updated[lombaId][timIndex] = Array(lomba?.maksPesertaPerTim || 0).fill('');
+      }
+      updated[lombaId][timIndex][pesertaIndex] = value;
+      return updated;
+    });
+  };
 
   const validateForm = () => {
     const currentErrors: string[] = [];
@@ -145,31 +145,47 @@ export default function FormModal({ open, onClose, data, onSuccess }: FormModalP
     if (!formData.kategori) currentErrors.push('Kategori harus dipilih');
 
     let adaLombaDipilih = false;
-    LOMBA_LIST.forEach(lomba => {
-        const fieldName = lomba.id.replace(/-/g, '_') as keyof typeof formData;
-        if (Number(formData[fieldName]) > 0) {
-            adaLombaDipilih = true;
+   LOMBA_LIST.forEach(lomba => {
+  const fieldName = lomba.id.replace(/-/g, '_') as keyof typeof formData;
+  const jumlahTim = Number(formData[fieldName]);
+
+  if (jumlahTim > 0) {
+
+    if (!peserta[lomba.id] || peserta[lomba.id].length < jumlahTim) {
+      currentErrors.push(`Peserta untuk ${lomba.nama} belum lengkap`);
+      return;
+    }
+
+    peserta[lomba.id].slice(0, jumlahTim).forEach((tim, timIndex) => {
+      tim.forEach((nama, pesertaIndex) => {
+        if (!nama.trim()) {
+          currentErrors.push(
+            `Nama anggota ${pesertaIndex + 1} Tim ${timIndex + 1} ${lomba.nama} belum diisi`
+          );
         }
+      });
     });
+  }
+});
     if (!adaLombaDipilih && !data) { // Hanya validasi jika ini bukan edit dan tidak ada lomba dipilih
         currentErrors.push('Minimal pilih satu lomba untuk diikuti.');
     }
 
     // Validasi data peserta dihapus
-    // Object.entries(peserta).forEach(([lombaId, tims]) => {
-    //   const lomba = LOMBA_LIST.find(l => l.id === lombaId);
-    //   const fieldName = lombaId.replace(/-/g, '_') as keyof typeof formData;
-    //   const jumlahTim = Number(formData[fieldName]);
-    //   if (lomba && jumlahTim > 0) {
-    //     tims.slice(0, jumlahTim).forEach((tim, timIndex) => {
-    //       tim.forEach((nama, pesertaIndex) => {
-    //         if (!nama.trim()) {
-    //           currentErrors.push(`Nama anggota ${pesertaIndex + 1} Tim ${timIndex + 1} ${lomba.nama} belum diisi`);
-    //         }
-    //       });
-    //     });
-    //   }
-    // });
+    Object.entries(peserta).forEach(([lombaId, tims]) => {
+      const lomba = LOMBA_LIST.find(l => l.id === lombaId);
+      const fieldName = lombaId.replace(/-/g, '_') as keyof typeof formData;
+      const jumlahTim = Number(formData[fieldName]);
+      if (lomba && jumlahTim > 0) {
+        tims.slice(0, jumlahTim).forEach((tim, timIndex) => {
+          tim.forEach((nama, pesertaIndex) => {
+            if (!nama.trim()) {
+              currentErrors.push(`Nama anggota ${pesertaIndex + 1} Tim ${timIndex + 1} ${lomba.nama} belum diisi`);
+            }
+          });
+        });
+      }
+    });
     setErrors(currentErrors);
     return currentErrors.length === 0;
   };
@@ -226,26 +242,26 @@ export default function FormModal({ open, onClose, data, onSuccess }: FormModalP
       }
 
       // Logika untuk insert peserta dihapus
-      // const pesertaToInsert = Object.entries(peserta)
-      //   .flatMap(([lombaId, tims]) => {
-      //     const lomba = LOMBA_LIST.find(l => l.id === lombaId);
-      //     const fieldName = lombaId.replace(/-/g, '_') as keyof typeof formData;
-      //     const jumlahTimAktif = Number(formData[fieldName]);
+      const pesertaToInsert = Object.entries(peserta)
+        .flatMap(([lombaId, tims]) => {
+          const lomba = LOMBA_LIST.find(l => l.id === lombaId);
+          const fieldName = lombaId.replace(/-/g, '_') as keyof typeof formData;
+          const jumlahTimAktif = Number(formData[fieldName]);
 
-      //     return tims.slice(0, jumlahTimAktif).flatMap((tim) => 
-      //       tim.filter(nama => nama.trim()).map(nama => ({
-      //         pendaftaran_id: pendaftaranId,
-      //         nama_sekolah: formData.nama_sekolah,
-      //         lomba: lomba?.nama || lombaId,
-      //         data_peserta: nama.trim()
-      //       }))
-      //     );
-      //   });
+          return tims.slice(0, jumlahTimAktif).flatMap((tim) => 
+            tim.filter(nama => nama.trim()).map(nama => ({
+              pendaftaran_id: pendaftaranId,
+              nama_sekolah: formData.nama_sekolah,
+              lomba: lomba?.nama || lombaId,
+              data_peserta: nama.trim()
+            }))
+          );
+        });
 
-      // if (pesertaToInsert.length > 0) {
-      //   const { error: pesertaError } = await supabase.from('peserta').insert(pesertaToInsert);
-      //   if (pesertaError) throw new Error(pesertaError.message || 'Gagal menyimpan data peserta');
-      // }
+      if (pesertaToInsert.length > 0) {
+        const { error: pesertaError } = await supabase.from('peserta').insert(pesertaToInsert);
+        if (pesertaError) throw new Error(pesertaError.message || 'Gagal menyimpan data peserta');
+      }
 
       if(!data?.id && !data?.kwitansi_url){
         const response = await fetch(`/api/generate-kwitansi?nomor=${pendaftaranPayload.nomor || nomor}`); // Gunakan nomor yang pasti ada
